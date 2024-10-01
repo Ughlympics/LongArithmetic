@@ -38,6 +38,7 @@ public:
 
 	//check
 	friend size_t size_check(const BigInt& left, const BigInt& right);
+	void resize(size_t newCount);
 
 	
 };

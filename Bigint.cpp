@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <sstream>
 
+const uint16_t MaxCount = 64;
 const uint16_t MaxSize = 512;
 const int64_t int32_size = 4294967296;
 
@@ -98,40 +99,41 @@ std::string BigInt::to_hex() const {
         result += ss.str(); 
     }
     
-    return /*removeLeadingZeros*/(reverseString(result));
+    return removeLeadingZeros(reverseString(result));
 }
 
 //operations
 BigInt BigInt::longAdd(const BigInt& left, const BigInt& right) {
-    BigInt result, helper;
-    if (size_check(left, right) == left.size) {
-        result = left;
-        helper = right;
-    }
-    else { 
-        result = right;
-        helper = left;
-    }
+    BigInt result, helper, helperr;
+    helper = left;
+    helperr = right;
 
-    /*uint32_t carry = 0;
-    for (size_t i, j = 0; i < size_check(left, right) + 2; i++) {
-        result.num[i] = result.num[i] + helper.num[i] + carry
+    result.resize(MaxCount);
 
-    }*/
-    uint32_t carry = 0;
-    size_t i = 0, j = 0;
+    helper.resize(MaxCount);
+    helperr.resize(MaxCount);
 
-    for (; i < size_check(left, right); ++i, ++j) {
-        uint32_t helperValue = (j < helper.count) ? helper.num[j] : 0;
+    uint64_t carry = 0; 
 
-        uint64_t temp = static_cast<uint64_t>(result.num[i]) + helperValue + carry;
+    for (size_t i = 0; i < MaxCount; ++i) {
+        uint64_t sum = static_cast<uint64_t>(helper.num[i]) + helperr.num[i] + carry; 
 
-        carry = (temp >> 32) & 0x1;
-        result.num[i] = static_cast<uint32_t>(temp);
+        if (sum >= int32_size) { 
+            carry = sum / int32_size;
+            result.num[i] = static_cast<uint32_t>(sum % int32_size); 
+        }
+        else {
+            carry = 0; 
+            result.num[i] = static_cast<uint32_t>(sum); 
+        }
     }
 
+    if (carry > 0) {
+        result.resize(MaxCount + 1); 
+        result.num[MaxCount] = static_cast<uint32_t>(carry); 
+    }
 
-    return result; 
+    return result;
 }
 
 //close functions 
@@ -145,27 +147,38 @@ BigInt BigInt::longAdd(const BigInt& left, const BigInt& right) {
     }
 
 
-    //std::string removeLeadingZeros(const std::string& input) {
-    //    if (input.empty()) {
-    //        return "0";
-    //    }
+    std::string removeLeadingZeros(const std::string& input) {
+        if (input.empty()) {
+            return "0";
+        }
 
-    //    size_t n = 0; // Начинаем с нулевого индекса
-    //    size_t k = input.length();
+        size_t n = 0;  
+        size_t k = input.length();
 
-    //    // Пропускаем все ведущие нули
-    //    while (n < k && input[n] == '0') {
-    //        n++;
-    //    }
+        while (n < k && input[n] == '0') {
+            n++;
+        }
 
-    //    // Если все символы - нули, возвращаем "0"
-    //    if (n == k) {
-    //        return "0";
-    //    }
+        if (n == k) {
+            return "0";
+        }
 
-    //    // Возвращаем подстроку без ведущих нулей
-    //    return input.substr(n);
-    //    }
+        std::string result = input.substr(n);
+
+        if (result.length() > 8) {
+            std::string block = result.substr(0, 8);
+            std::string rest = result.substr(8);  
+
+            size_t lastNonZero = block.find_last_not_of('0');
+            if (lastNonZero != std::string::npos) {
+                block = block.substr(0, lastNonZero + 1);
+            }
+
+            return block + rest;
+        }
+
+        return result;
+    }
     
 
     size_t size_check(const BigInt& left, const BigInt& right) {
@@ -175,4 +188,24 @@ BigInt BigInt::longAdd(const BigInt& left, const BigInt& right) {
         else { return right.size; }
     }
 
+    void BigInt::resize(size_t newCount) {
+        if (count == newCount) {
+            return; 
+        }
+
+        uint32_t* newNum = new uint32_t[newCount];
+
+        for (size_t i = 0; i < count + 1; ++i) {
+            newNum[i] = num[i];
+        }
+
+        for (size_t i = count; i < newCount; ++i) {
+            newNum[i] = 0;
+        }
+
+        delete[] num;
+
+        num = newNum;
+        count = newCount;
+    }
 

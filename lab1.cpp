@@ -9,15 +9,15 @@
 
 int main() {
     BigInt a, b, sum;
-    std::string n = "4d3c91c4";
-    //std::string k = "0x0";
+    std::string n = "4d3c91c445";
+    std::string k = "426946294298";
     a = n;
-    //b = k;
+    b = k;
 
-    ////sum = sum.longAdd(a, b);
+    sum = sum.longAdd(a, b);
 
     std::cout << "Result: " << a.to_hex() << std::endl;
-    //std::cout << "Result: " << b.to_hex() << std::endl;
+    std::cout << "Result: " << sum.to_hex() << std::endl;
 
     return 0;
 }
