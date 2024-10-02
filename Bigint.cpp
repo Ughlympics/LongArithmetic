@@ -121,9 +121,37 @@ BigInt BigInt::longAdd(const BigInt& left, const BigInt& right) {
             result.num[i] = static_cast<uint32_t>(sum); 
         }
     }
+    return result;
+}
 
-   
+BigInt BigInt::longSub(const BigInt& left, const BigInt& right) {
+    BigInt result;
+    BigInt minuend = left; 
+    BigInt subtrahend = right; 
 
+    minuend.resize(MaxCount);
+    subtrahend.resize(MaxCount);
+    result.resize(MaxCount);
+
+    int64_t borrow = 0;
+
+    for (size_t i = 0; i < MaxCount; ++i) {
+        int64_t diff = static_cast<int64_t>(minuend.num[i]) - subtrahend.num[i] - borrow;
+
+        if (diff < 0) {  
+            diff += int32_size;  
+            borrow = 1;  
+        }
+        else {
+            borrow = 0;  
+        }
+
+        result.num[i] = static_cast<uint32_t>(diff);
+    }
+
+    if (borrow > 0) {
+        std::cerr << "Warning: Result is negative!" << std::endl;
+    }
     return result;
 }
 
@@ -177,38 +205,6 @@ BigInt BigInt::longAdd(const BigInt& left, const BigInt& right) {
     }
 
     //other functions
-    std::string removeLeadingZeros(const std::string& input) {
-        if (input.empty()) {
-            return "0";
-        }
-
-        size_t n = 0;  
-        size_t k = input.length();
-
-        while (n < k && input[n] == '0') {
-            n++;
-        }
-
-        if (n == k) {
-            return "0";
-        }
-
-        std::string result = input.substr(n);
-
-        if (result.length() > 8) {
-            std::string block = result.substr(0, 8);
-            std::string rest = result.substr(8);  
-
-            size_t lastNonZero = block.find_last_not_of('0');
-            if (lastNonZero != std::string::npos) {
-                block = block.substr(0, lastNonZero + 1);
-            }
-
-            return block + rest;
-        }
-
-        return result;
-    }
     
 
     size_t size_check(const BigInt& left, const BigInt& right) {
