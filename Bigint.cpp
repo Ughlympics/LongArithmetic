@@ -4,6 +4,7 @@
 #include <iomanip>
 #include <algorithm>
 #include <sstream>
+#include <vector>
 
 const uint16_t MaxCount = 64;
 const uint16_t MaxSize = 512;
@@ -39,13 +40,6 @@ BigInt& BigInt::operator=(const std::string& hex_str) {
         throw std::length_error("Error: String exceeds maximum length");
     }
 
-    /*if (hex_str.length() <= 2 || hex_str[0] != '0' || hex_str[1] != 'x' ||
-        !std::all_of(hex_str.begin() + 2, hex_str.end(), [](char c) -> bool {
-            return (std::isalpha(c) && std::tolower(c) < 'g') || std::isdigit(c);
-            }))
-    {
-        return *this;
-    }*/
     size_t length = hex_str.length();
     size_t newCount = (length / 8) + 1 ;
 
@@ -59,7 +53,7 @@ BigInt& BigInt::operator=(const std::string& hex_str) {
         num[i] = 0; 
     }
 
-    std::string rev = reverseString(hex_str);
+    std::string rev = reverseBlocks(hex_str);
     
     size = rev.length();
 
@@ -98,8 +92,8 @@ std::string BigInt::to_hex() const {
         ss << std::hex << std::setfill('0') << std::setw(8) << num[i];
         result += ss.str(); 
     }
-    
-    return removeLeadingZeros(reverseString(result));
+    /**/
+    return (reverseBlocksBack(result));
 }
 
 //operations
@@ -119,7 +113,7 @@ BigInt BigInt::longAdd(const BigInt& left, const BigInt& right) {
         uint64_t sum = static_cast<uint64_t>(helper.num[i]) + helperr.num[i] + carry; 
 
         if (sum >= int32_size) { 
-            carry = sum / int32_size;
+            carry = 1;
             result.num[i] = static_cast<uint32_t>(sum % int32_size); 
         }
         else {
@@ -128,25 +122,61 @@ BigInt BigInt::longAdd(const BigInt& left, const BigInt& right) {
         }
     }
 
-    if (carry > 0) {
-        result.resize(MaxCount + 1); 
-        result.num[MaxCount] = static_cast<uint32_t>(carry); 
-    }
+   
 
     return result;
 }
 
-//close functions 
-    std::string reverseString(const std::string & input) {
-        if (input.length() < 2) {
-            return input;
+//all reverse realization))
+    std::string reverseBlocks(const std::string& input) {
+        std::string result = input;
+        size_t length = result.length();
+
+        if (length % 8 != 0) {
+            size_t padding = 8 - (length % 8);
+
+            result.insert(0, padding, '0');
         }
-        std::string reversed = input;
-        std::reverse(reversed.begin(), reversed.end());
+        size_t blockSize = 8;
+        std::vector<std::string> blocks;
+
+        for (size_t i = 0; i < result.length(); i += blockSize) {
+            blocks.push_back(result.substr(i, blockSize));
+        }
+
+        std::reverse(blocks.begin(), blocks.end());
+
+        std::string reversed;
+        for (const auto& block : blocks) {
+            reversed += block;
+        }
+
         return reversed;
     }
+    std::string reverseBlocksBack(const std::string& input) {
+        size_t blockSize = 8;
+        std::vector<std::string> blocks;
 
+        for (size_t i = 0; i < input.length(); i += blockSize) {
+            blocks.push_back(input.substr(i, blockSize));
+        }
 
+        std::reverse(blocks.begin(), blocks.end());
+
+        std::string result;
+        for (const auto& block : blocks) {
+            result += block;
+        }
+
+        size_t firstNonZero = result.find_first_not_of('0');
+        if (firstNonZero == std::string::npos) {
+            return "0";
+        }
+
+        return result.substr(firstNonZero);
+    }
+
+    //other functions
     std::string removeLeadingZeros(const std::string& input) {
         if (input.empty()) {
             return "0";
@@ -195,7 +225,7 @@ BigInt BigInt::longAdd(const BigInt& left, const BigInt& right) {
 
         uint32_t* newNum = new uint32_t[newCount];
 
-        for (size_t i = 0; i < count + 1; ++i) {
+        for (size_t i = 0; count && i < newCount; ++i) {
             newNum[i] = num[i];
         }
 
@@ -204,7 +234,7 @@ BigInt BigInt::longAdd(const BigInt& left, const BigInt& right) {
         }
 
         delete[] num;
-
+ 
         num = newNum;
         count = newCount;
     }

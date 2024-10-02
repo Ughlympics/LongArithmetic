@@ -45,6 +45,8 @@ public:
 
 //close func
 std::string reverseString(const std::string& input);
+std::string reverseBlocks(const std::string& input);
+std::string reverseBlocksBack(const std::string& input);
 std::string removeLeadingZeros(const std::string& input);
 
 
