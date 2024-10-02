@@ -155,6 +155,34 @@ BigInt BigInt::longSub(const BigInt& left, const BigInt& right) {
     return result;
 }
 
+BigInt BigInt::multiplyDigitByBigInt(const BigInt& number, uint32_t digit) {
+    BigInt result;
+    if (digit == 0) {
+        return result;
+    }
+ 
+    result.resize(MaxCount);
+    BigInt minuend = number;
+    minuend.resize(MaxCount);
+
+    uint64_t carry = 0;
+
+    for (size_t i = 0; i < MaxCount; ++i) {
+        uint64_t product = static_cast<uint64_t>(minuend.num[i]) * digit + carry;
+
+        result.num[i] = static_cast<uint32_t>(product);
+
+        carry = product >> 32;
+    }
+
+    if (carry > 0) {
+        result.resize(result.count + 1); 
+        result.num[result.count - 1] = static_cast<uint32_t>(carry);
+    }
+
+    return result;
+}
+
 //all reverse realization))
     std::string reverseBlocks(const std::string& input) {
         std::string result = input;

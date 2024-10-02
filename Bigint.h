@@ -36,6 +36,7 @@ public:
 	//operations
 	BigInt longAdd(const BigInt& left, const BigInt& right);
 	BigInt longSub(const BigInt& left, const BigInt& right);
+	BigInt multiplyDigitByBigInt(const BigInt& number, uint32_t digit);
 
 	//check
 	friend size_t size_check(const BigInt& left, const BigInt& right);
