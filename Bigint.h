@@ -37,10 +37,21 @@ public:
 	BigInt longAdd(const BigInt& left, const BigInt& right);
 	BigInt longSub(const BigInt& left, const BigInt& right);
 	BigInt multiplyDigitByBigInt(const BigInt& number, uint32_t digit);
+	BigInt multiplyBigInt(const BigInt& left, const BigInt& right);
 
 	//check
-	friend size_t size_check(const BigInt& left, const BigInt& right);
+	friend size_t count_check(const BigInt& left, const BigInt& right);
 	void resize(size_t newCount);
+
+	////
+	size_t bitLength() const;
+	BigInt shiftBitsToHigh(size_t n) const;
+	bool operator>=(const BigInt& other) const;
+	bool operator==(const BigInt& other) const;
+	BigInt operator-(const BigInt& other) const;
+	BigInt divide(const BigInt& A, const BigInt& B);
+	bool operator<(const BigInt& other) const;
+	BigInt operator<<(unsigned long long shift) const;
 
 	
 };

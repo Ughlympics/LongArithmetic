@@ -101,15 +101,16 @@ BigInt BigInt::longAdd(const BigInt& left, const BigInt& right) {
     BigInt result, helper, helperr;
     helper = left;
     helperr = right;
+    size_t _count = count_check(left, right);
 
-    result.resize(MaxCount);
+    result.resize(_count);
 
-    helper.resize(MaxCount);
-    helperr.resize(MaxCount);
+    helper.resize(_count);
+    helperr.resize(_count);
 
     uint64_t carry = 0; 
 
-    for (size_t i = 0; i < MaxCount; ++i) {
+    for (size_t i = 0; i < _count; ++i) {
         uint64_t sum = static_cast<uint64_t>(helper.num[i]) + helperr.num[i] + carry; 
 
         if (sum >= int32_size) { 
@@ -127,15 +128,16 @@ BigInt BigInt::longAdd(const BigInt& left, const BigInt& right) {
 BigInt BigInt::longSub(const BigInt& left, const BigInt& right) {
     BigInt result;
     BigInt minuend = left; 
-    BigInt subtrahend = right; 
+    BigInt subtrahend = right;
+    size_t _count = count_check(left, right);
 
-    minuend.resize(MaxCount);
-    subtrahend.resize(MaxCount);
-    result.resize(MaxCount);
+    minuend.resize(_count);
+    subtrahend.resize(_count);
+    result.resize(_count);
 
     int64_t borrow = 0;
 
-    for (size_t i = 0; i < MaxCount; ++i) {
+    for (size_t i = 0; i < _count; ++i) {
         int64_t diff = static_cast<int64_t>(minuend.num[i]) - subtrahend.num[i] - borrow;
 
         if (diff < 0) {  
@@ -183,6 +185,24 @@ BigInt BigInt::multiplyDigitByBigInt(const BigInt& number, uint32_t digit) {
     return result;
 }
 
+BigInt BigInt::multiplyBigInt(const BigInt& left, const BigInt& right) {
+    BigInt result;
+    result.resize(left.count + right.count);
+
+    uint64_t carry = 0;
+
+    for (size_t i = 0; i < left.count; ++i) {
+        carry = 0; 
+        for (size_t j = 0; j < right.count; ++j) {
+            uint64_t product = static_cast<uint64_t>(left.num[i]) * right.num[j] + result.num[i + j] + carry;
+            result.num[i + j] = static_cast<uint32_t>(product);
+            carry = product >> 32;
+        }
+        result.num[i + right.count] = static_cast<uint32_t>(carry);
+    }
+    return result;
+}
+
 //all reverse realization))
     std::string reverseBlocks(const std::string& input) {
         std::string result = input;
@@ -195,18 +215,14 @@ BigInt BigInt::multiplyDigitByBigInt(const BigInt& number, uint32_t digit) {
         }
         size_t blockSize = 8;
         std::vector<std::string> blocks;
-
         for (size_t i = 0; i < result.length(); i += blockSize) {
             blocks.push_back(result.substr(i, blockSize));
         }
-
         std::reverse(blocks.begin(), blocks.end());
-
         std::string reversed;
         for (const auto& block : blocks) {
             reversed += block;
         }
-
         return reversed;
     }
     std::string reverseBlocksBack(const std::string& input) {
@@ -228,28 +244,27 @@ BigInt BigInt::multiplyDigitByBigInt(const BigInt& number, uint32_t digit) {
         if (firstNonZero == std::string::npos) {
             return "0";
         }
-
         return result.substr(firstNonZero);
     }
 
     //other functions
     
 
-    size_t size_check(const BigInt& left, const BigInt& right) {
-        if (left.size > right.size) {
-            return left.size;
+    size_t count_check(const BigInt& left, const BigInt& right) {
+        if (left.count > right.count) {
+            return left.count;
         }
-        else { return right.size; }
+        else { return right.count; }
     }
 
     void BigInt::resize(size_t newCount) {
-        if (count == newCount) {
+        if (this->count == newCount) {
             return; 
         }
 
         uint32_t* newNum = new uint32_t[newCount];
 
-        for (size_t i = 0; count && i < newCount; ++i) {
+        for (size_t i = 0;  i < std::min(count, newCount); ++i) {
             newNum[i] = num[i];
         }
 
@@ -263,3 +278,184 @@ BigInt BigInt::multiplyDigitByBigInt(const BigInt& number, uint32_t digit) {
         count = newCount;
     }
 
+    ////////////
+    size_t BigInt::bitLength() const {
+        size_t bitLength = 0;
+
+        for (size_t i = count - 1; i >= 0; --i) { 
+            if (num[i] != 0) {
+                for (int j = 31; j >= 0; --j) {
+                    if (num[i] & (1 << j)) {
+                        bitLength = i * 32 + j + 1;
+                        return bitLength;
+                    }
+                }
+            }
+        }
+
+        return bitLength; 
+    }
+
+    BigInt BigInt::shiftBitsToHigh(size_t n) const {
+        BigInt result(*this);
+
+        size_t chunkShift = n / 32;
+        size_t bitShift = n % 32;    
+
+        result.resize(count + chunkShift);
+
+        if (chunkShift > 0) {
+            for (size_t i = count; i-- > 0;) {
+                result.num[i + chunkShift] = result.num[i];
+            }
+
+            for (size_t i = 0; i < chunkShift; ++i) {
+                result.num[i] = 0;
+            }
+        }
+
+        if (bitShift > 0) {
+            uint32_t carry = 0; 
+            for (size_t i = 0; i < count + chunkShift; ++i) {
+                uint32_t current = result.num[i];
+                result.num[i] = (current << bitShift) | carry; 
+                carry = current >> (32 - bitShift);
+            }
+
+            if (carry > 0) {
+                result.resize(result.count + 1);
+                result.num[result.count - 1] = carry;
+            }
+        }
+
+        return result;
+    }
+
+    bool BigInt::operator>=(const BigInt& other) const {
+        if (count != other.count) {
+            return count > other.count;
+        }
+
+        for (size_t i = count - 1 ; i >= 0; --i) {
+            if (this->num[i] != other.num[i]) {
+                return this->num[i] > other.num[i];
+            }
+        }
+
+        return true;
+    }
+
+    bool BigInt::operator==(const BigInt& other) const {
+        if (count != other.count) {
+            return false;
+        }
+
+        for (size_t i = 0; i < count; ++i) {
+            if (num[i] != other.num[i]) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    BigInt BigInt::operator-(const BigInt& other) const {
+        
+
+        BigInt result = *this;
+        uint32_t borrow = 0;
+
+        for (size_t i = 0; i < count; ++i) {
+            uint64_t diff = static_cast<uint64_t>(result.num[i]) - other.num[i] - borrow;
+            if (result.num[i] < other.num[i] + borrow) {
+                borrow = 1;
+            }
+            else {
+                borrow = 0;
+            }
+            result.num[i] = static_cast<uint32_t>(diff);
+        }
+
+        return result;
+    }
+
+    BigInt BigInt::divide(const BigInt& A, const BigInt& B) {
+        /*if (B.to_hex() == "0") {
+            throw std::invalid_argument("Division by zero!");
+        }*/
+
+        BigInt Q, C;
+        BigInt R = A; 
+
+        size_t k = B.bitLength();
+        size_t t;
+
+        if (R >= B) {
+            t = R.bitLength(); 
+
+            C = B.shiftBitsToHigh(t - k); 
+            std::cout << C.to_hex() << std::endl;
+            if (R < C) {
+                t = t - 1; 
+                C = B.shiftBitsToHigh(t - k);  
+            }
+
+            R = R.longSub(R, C);
+            BigInt shiftValue ;
+            shiftValue = "1";
+            shiftValue.resize(count + t - k);
+            shiftValue = shiftValue << (t - k); 
+            Q = Q.longAdd(Q, shiftValue); 
+        }
+
+        /*remainder = R; */
+        return Q;
+    }
+
+    bool BigInt::operator<(const BigInt& other) const {
+        if (count != other.count) {
+            return count < other.count;
+        }
+
+        for (size_t i = count - 1; i >= 0; --i) {
+            if (num[i] != other.num[i]) {
+                return num[i] < other.num[i];
+            }
+        }
+
+        return false;
+    }
+
+    BigInt BigInt::operator<<(unsigned long long shift) const {
+        BigInt result = *this;
+
+        size_t blockShift = shift / 32;
+        size_t bitShift = shift % 32;    
+
+        result.resize(count + blockShift);
+
+        for (size_t i = count; i-- > 0;) { 
+            if (i >= blockShift) {
+                result.num[i] = result.num[i - blockShift];
+            }
+            else {
+                result.num[i] = 0;
+            }
+        }
+
+        if (bitShift > 0) {
+            uint32_t carry = 0;
+            for (size_t i = 0; i < result.count; ++i) {
+                uint64_t temp = (static_cast<uint64_t>(result.num[i]) << bitShift) | carry;
+                carry = static_cast<uint32_t>(temp >> 32);
+                result.num[i] = static_cast<uint32_t>(temp); 
+            }
+
+            if (carry > 0) {
+                result.resize(result.count + 1);
+                result.num[result.count - 1] = carry;
+            }
+        }
+
+        return result;
+    }

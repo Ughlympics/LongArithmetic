@@ -8,21 +8,29 @@
 
 
 int main() {
-    BigInt a, b, sum, sub, mul;
-    std::string n = "5784abde982aa027d6fb10d409256f4ef79389842c6e41388735d12326d1829d9bfa21c15170e07eead079eb90eccc2602d17c924df43829d047624747a1cd312c32e66b1b35fc20254fb75c51234b32f7f11aa513fe4bcdfcc2549cfbde1dc625bc92ea559141dfab69";
-    std::string k = "2";
+    BigInt a, b, c, sum, sub, mul, bigmul, div, d;
+    std::string n = "935234324698";
+    std::string k = "21464189545";
+    std::string z = "5784abde9";
     a = n;
     b = k;
+    c = z; 
 
-    sum = sum.longAdd(a, b);
-    sub = sub.longSub(a, b);
-    mul = mul.multiplyDigitByBigInt(a, 0);
+    //sum = sum.longAdd(a, b);
+    //sub = sub.longSub(a, b);
+    //mul = mul.multiplyDigitByBigInt(a, 0);
+    //bigmul = bigmul.multiplyBigInt(a, c);
+    div = a.divide(a, b);
 
-    std::cout << "Result: " << a.to_hex() << std::endl;
-    std::cout << "Result: " << b.to_hex() << std::endl;
-    std::cout << "Result: " << sum.to_hex() << std::endl;
-    std::cout << "Result: " << sub.to_hex() << std::endl;
-    std::cout << "Result: " << mul.to_hex() << std::endl;
+
+    std::cout << "First number: " << a.to_hex() << std::endl;
+    std::cout << "Second: " << b.to_hex() << std::endl;
+    std::cout << "SumResult: " << sum.to_hex() << std::endl;
+    std::cout << "SubResult: " << sub.to_hex() << std::endl;
+    std::cout << "MulDigitResult: " << mul.to_hex() << std::endl;
+    std::cout << "MulResult: " << bigmul.to_hex() << std::endl;
+    std::cout << "DivResult: " << div.to_hex() << std::endl;
+    //std::cout << "MulResult: " << d.to_hex() << std::endl;
 
     return 0;
 }
