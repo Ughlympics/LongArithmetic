@@ -317,9 +317,10 @@ BigInt BigInt::multiplyBigInt(const BigInt& left, const BigInt& right) {
         if (bitShift > 0) {
             uint32_t carry = 0; 
             for (size_t i = 0; i < count + chunkShift; ++i) {
-                uint32_t current = result.num[i];
-                result.num[i] = (current << bitShift) | carry; 
-                carry = current >> (32 - bitShift);
+                uint64_t current = (static_cast<uint64_t>(result.num[i]) << bitShift) | carry;
+                result.num[i] = static_cast<uint32_t>(current);
+                carry = current >> 32;  // Теперь перенос сохраняет все биты, которые уходят за границу 32 бит
+            
             }
 
             if (carry > 0) {
@@ -390,11 +391,10 @@ BigInt BigInt::multiplyBigInt(const BigInt& left, const BigInt& right) {
         size_t k = B.bitLength();
         size_t t;
 
-        if (R >= B) {
+        while (R >= B) {
             t = R.bitLength(); 
 
             C = B.shiftBitsToHigh(t - k); 
-            std::cout << C.to_hex() << std::endl;
             if (R < C) {
                 t = t - 1; 
                 C = B.shiftBitsToHigh(t - k);  
@@ -404,12 +404,42 @@ BigInt BigInt::multiplyBigInt(const BigInt& left, const BigInt& right) {
             BigInt shiftValue ;
             shiftValue = "1";
             shiftValue.resize(count + t - k);
-            shiftValue = shiftValue << (t - k); 
+            shiftValue = shiftValue.shiftBitsToHigh(t - k);
             Q = Q.longAdd(Q, shiftValue); 
         }
 
         /*remainder = R; */
-        return Q;
+        return  Q;
+    }
+    BigInt BigInt::modulo(const BigInt& A, const BigInt& B) {
+        /*if (B.to_hex() == "0") {
+            throw std::invalid_argument("Division by zero!");
+        }*/
+
+        BigInt Q, C;
+        BigInt R = A;
+
+        size_t k = B.bitLength();
+        size_t t;
+
+        while (R >= B) {
+            t = R.bitLength();
+            C = B.shiftBitsToHigh(t - k);
+            if (R < C) {
+                t = t - 1;
+                C = B.shiftBitsToHigh(t - k);
+            }
+
+            R = R.longSub(R, C);
+            BigInt shiftValue;
+            shiftValue = "1";
+            shiftValue.resize(count + t - k);
+            shiftValue = shiftValue.shiftBitsToHigh(t - k);
+            Q = Q.longAdd(Q, shiftValue);
+        }
+
+        /*remainder = R; */
+        return R;
     }
 
     bool BigInt::operator<(const BigInt& other) const {

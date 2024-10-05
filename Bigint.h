@@ -52,6 +52,7 @@ public:
 	BigInt divide(const BigInt& A, const BigInt& B);
 	bool operator<(const BigInt& other) const;
 	BigInt operator<<(unsigned long long shift) const;
+	BigInt modulo(const BigInt& A, const BigInt& B);
 
 	
 };
