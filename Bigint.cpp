@@ -96,6 +96,44 @@ std::string BigInt::to_hex() const {
     return (reverseBlocksBack(result));
 }
 
+std::string hexToBinary(const std::string& hex) {
+    std::string binary; 
+
+    const std::string binaryLookup[16] = {
+        "0000", "0001", "0010", "0011", "0100", "0101",
+        "0110", "0111", "1000", "1001", "1010", "1011",
+        "1100", "1101", "1110", "1111"
+    };
+
+    for (char c : hex) {
+        int value;
+
+        if (c >= '0' && c <= '9') {
+            value = c - '0';
+        }
+        else if (c >= 'a' && c <= 'f') {
+            value = c - 'a' + 10;
+        }
+        else if (c >= 'A' && c <= 'F') {
+            value = c - 'A' + 10; 
+        }
+        else {
+            throw std::invalid_argument("Invalid hex character");
+        }
+
+        binary += binaryLookup[value];
+    }
+
+    size_t first_one = binary.find('1');
+    if (first_one != std::string::npos) {
+        return binary.substr(first_one);
+    }
+
+    return "0";
+}
+
+
+
 //operations
 BigInt BigInt::longAdd(const BigInt& left, const BigInt& right) {
     BigInt result, helper, helperr;
@@ -127,20 +165,26 @@ BigInt BigInt::longAdd(const BigInt& left, const BigInt& right) {
 
 BigInt BigInt::longSub(const BigInt& left, const BigInt& right) {
     BigInt result;
-    BigInt minuend = left; 
-    BigInt subtrahend = right;
+    BigInt minuend; 
+    BigInt subtrahend;
     size_t _count = count_check(left, right);
+    if (left < right) {
+        throw std::invalid_argument("Subtraction error: right operand is greater than left operand.");
+    }
+    minuend = left;
+    subtrahend = right;
+      
 
     minuend.resize(_count);
     subtrahend.resize(_count);
     result.resize(_count);
 
-    int64_t borrow = 0;
+    uint32_t borrow = 0;
 
     for (size_t i = 0; i < _count; ++i) {
-        int64_t diff = static_cast<int64_t>(minuend.num[i]) - subtrahend.num[i] - borrow;
+        uint32_t diff = static_cast<uint32_t>(minuend.num[i]) - subtrahend.num[i] - borrow;
 
-        if (diff < 0) {  
+        if (diff > minuend.num[i]) {
             diff += int32_size;  
             borrow = 1;  
         }
@@ -149,10 +193,6 @@ BigInt BigInt::longSub(const BigInt& left, const BigInt& right) {
         }
 
         result.num[i] = static_cast<uint32_t>(diff);
-    }
-
-    if (borrow > 0) {
-        std::cerr << "Warning: Result is negative!" << std::endl;
     }
     return result;
 }
@@ -200,6 +240,93 @@ BigInt BigInt::multiplyBigInt(const BigInt& left, const BigInt& right) {
         }
         result.num[i + right.count] = static_cast<uint32_t>(carry);
     }
+    return result;
+}
+BigInt BigInt::divide(const BigInt& A, const BigInt& B) {
+
+    BigInt Q, C;
+    BigInt R = A;
+
+    size_t k = B.bitLength();
+    size_t t;
+
+    while (R >= B) {
+        t = R.bitLength();
+
+        C = B.shiftBitsToHigh(t - k);
+        std::cout << "B (before shift): " << B.to_hex() << std::endl;
+        std::cout << "C (after shift): " << C.to_hex() << std::endl;
+        if (R < C) {
+            t = t - 1;
+            C = B.shiftBitsToHigh(t - k);
+            std::cout << "C2: " << C.to_hex() << std::endl;
+        }
+
+        R = R.longSub(R, C);
+        std::cout << "After subtraction R: " << R.to_hex() << std::endl;
+        BigInt shiftValue;
+        shiftValue = "1";
+        shiftValue.resize(count + t - k);
+        shiftValue = shiftValue.shiftBitsToHigh(t - k);
+        Q = Q.longAdd(Q, shiftValue);
+        std::cout << "Q " << Q.to_hex() << std::endl;
+    }
+
+    /*remainder = R; */
+    return  Q;
+}
+BigInt BigInt::modulo(const BigInt& A, const BigInt& B) {
+    /*if (B.to_hex() == "0") {
+        throw std::invalid_argument("Division by zero!");
+    }*/
+
+    BigInt Q, C;
+    BigInt R = A;
+
+    size_t k = B.bitLength();
+    size_t t;
+
+    while (R >= B) {
+        t = R.bitLength();
+        C = B.shiftBitsToHigh(t - k);
+        if (R < C) {
+            t = t - 1;
+            C = B.shiftBitsToHigh(t - k);
+        }
+
+        R = R.longSub(R, C);
+        BigInt shiftValue;
+        shiftValue = "1";
+        shiftValue.resize(count + t - k);
+        shiftValue = shiftValue.shiftBitsToHigh(t - k);
+        Q = Q.longAdd(Q, shiftValue);
+    }
+
+    /*remainder = R; */
+    return R;
+}
+
+BigInt BigInt::LongPowerWindow(const BigInt& left, int right) {
+    std::string bit = intToBinary(right);
+    std::reverse(bit.begin(), bit.end());
+    std::cout << "Bit: " << bit << std::endl;
+
+    BigInt A = left;
+    BigInt result;
+    result = "1";
+
+    size_t m = bit.length();
+    std::cout << "M: " << m << std::endl;
+
+    for (size_t i = 0; i < m; i++) {
+        if (bit[i] == '1') {
+            result = multiplyBigInt(result, A);
+            std::cout << "result: " << result.to_hex() << std::endl;
+        }
+        A = multiplyBigInt(A, A);
+        std::cout << A.to_hex() << std::endl;
+    }
+
     return result;
 }
 
@@ -319,7 +446,7 @@ BigInt BigInt::multiplyBigInt(const BigInt& left, const BigInt& right) {
             for (size_t i = 0; i < count + chunkShift; ++i) {
                 uint64_t current = (static_cast<uint64_t>(result.num[i]) << bitShift) | carry;
                 result.num[i] = static_cast<uint32_t>(current);
-                carry = current >> 32;  // Теперь перенос сохраняет все биты, которые уходят за границу 32 бит
+                carry = current >> 32; 
             
             }
 
@@ -380,76 +507,16 @@ BigInt BigInt::multiplyBigInt(const BigInt& left, const BigInt& right) {
         return result;
     }
 
-    BigInt BigInt::divide(const BigInt& A, const BigInt& B) {
-        /*if (B.to_hex() == "0") {
-            throw std::invalid_argument("Division by zero!");
-        }*/
-
-        BigInt Q, C;
-        BigInt R = A; 
-
-        size_t k = B.bitLength();
-        size_t t;
-
-        while (R >= B) {
-            t = R.bitLength(); 
-
-            C = B.shiftBitsToHigh(t - k); 
-            if (R < C) {
-                t = t - 1; 
-                C = B.shiftBitsToHigh(t - k);  
-            }
-
-            R = R.longSub(R, C);
-            BigInt shiftValue ;
-            shiftValue = "1";
-            shiftValue.resize(count + t - k);
-            shiftValue = shiftValue.shiftBitsToHigh(t - k);
-            Q = Q.longAdd(Q, shiftValue); 
-        }
-
-        /*remainder = R; */
-        return  Q;
-    }
-    BigInt BigInt::modulo(const BigInt& A, const BigInt& B) {
-        /*if (B.to_hex() == "0") {
-            throw std::invalid_argument("Division by zero!");
-        }*/
-
-        BigInt Q, C;
-        BigInt R = A;
-
-        size_t k = B.bitLength();
-        size_t t;
-
-        while (R >= B) {
-            t = R.bitLength();
-            C = B.shiftBitsToHigh(t - k);
-            if (R < C) {
-                t = t - 1;
-                C = B.shiftBitsToHigh(t - k);
-            }
-
-            R = R.longSub(R, C);
-            BigInt shiftValue;
-            shiftValue = "1";
-            shiftValue.resize(count + t - k);
-            shiftValue = shiftValue.shiftBitsToHigh(t - k);
-            Q = Q.longAdd(Q, shiftValue);
-        }
-
-        /*remainder = R; */
-        return R;
-    }
+    
 
     bool BigInt::operator<(const BigInt& other) const {
-        if (count != other.count) {
-            return count < other.count;
-        }
+        /*if (this->count != other.count) {
+            return this->count < other.count;
+        }*/
 
-        for (size_t i = count - 1; i >= 0; --i) {
-            if (num[i] != other.num[i]) {
-                return num[i] < other.num[i];
+        for (int i = count - 1; i >= 0; --i) {
+            if (this->num[i] != other.num[i]) {
+                return this->num[i] < other.num[i];
             }
         }
 
@@ -488,4 +555,13 @@ BigInt BigInt::multiplyBigInt(const BigInt& left, const BigInt& right) {
         }
 
         return result;
+    }
+
+    std::string intToBinary(int n) {
+        std::string binary;
+        while (n > 0) {
+            binary = (n % 2 == 0 ? "0" : "1") + binary;
+            n /= 2;
+        }
+        return binary.empty() ? "0" : binary;  
     }

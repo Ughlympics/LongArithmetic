@@ -27,6 +27,11 @@ public:
 	//overloaded operators
 	BigInt& operator=(const std::string& hex_str);
 	BigInt& operator=(const BigInt& copy);
+	BigInt operator<<(unsigned long long shift) const;
+	bool operator>=(const BigInt& other) const;
+	bool operator==(const BigInt& other) const;
+	BigInt operator-(const BigInt& other) const;
+	bool operator<(const BigInt& other) const;
 
 //print realize
 	std::string to_hex() const;
@@ -38,21 +43,18 @@ public:
 	BigInt longSub(const BigInt& left, const BigInt& right);
 	BigInt multiplyDigitByBigInt(const BigInt& number, uint32_t digit);
 	BigInt multiplyBigInt(const BigInt& left, const BigInt& right);
+	BigInt divide(const BigInt& A, const BigInt& B);
+	BigInt modulo(const BigInt& A, const BigInt& B);
+	BigInt LongPowerWindow(const BigInt& left, int right);
 
 	//check
 	friend size_t count_check(const BigInt& left, const BigInt& right);
 	void resize(size_t newCount);
 
-	////
+	//divide logic
 	size_t bitLength() const;
 	BigInt shiftBitsToHigh(size_t n) const;
-	bool operator>=(const BigInt& other) const;
-	bool operator==(const BigInt& other) const;
-	BigInt operator-(const BigInt& other) const;
-	BigInt divide(const BigInt& A, const BigInt& B);
-	bool operator<(const BigInt& other) const;
-	BigInt operator<<(unsigned long long shift) const;
-	BigInt modulo(const BigInt& A, const BigInt& B);
+
 
 	
 };
@@ -61,5 +63,7 @@ public:
 std::string reverseString(const std::string& input);
 std::string reverseBlocks(const std::string& input);
 std::string reverseBlocksBack(const std::string& input);
+std::string hexToBinary(const std::string& hex);
+std::string intToBinary(int n);
 
 
