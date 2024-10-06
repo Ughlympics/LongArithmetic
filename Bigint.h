@@ -54,6 +54,8 @@ public:
 	//divide logic
 	size_t bitLength() const;
 	BigInt shiftBitsToHigh(size_t n) const;
+	bool comparsion(const BigInt& left, const BigInt& right) const;
+	bool selector(const BigInt*& longer, const BigInt*& shorter) const;
 
 
 	

@@ -132,8 +132,6 @@ std::string hexToBinary(const std::string& hex) {
     return "0";
 }
 
-
-
 //operations
 BigInt BigInt::longAdd(const BigInt& left, const BigInt& right) {
     BigInt result, helper, helperr;
@@ -243,53 +241,46 @@ BigInt BigInt::multiplyBigInt(const BigInt& left, const BigInt& right) {
     return result;
 }
 BigInt BigInt::divide(const BigInt& A, const BigInt& B) {
-
     BigInt Q, C;
     BigInt R = A;
 
     size_t k = B.bitLength();
     size_t t;
-
-    while (R >= B) {
+    
+    while (!comparsion(R, B)) {
         t = R.bitLength();
 
         C = B.shiftBitsToHigh(t - k);
-        std::cout << "B (before shift): " << B.to_hex() << std::endl;
-        std::cout << "C (after shift): " << C.to_hex() << std::endl;
-        if (R < C) {
+        /*std::cout << "B (before shift): " << B.to_hex() << std::endl;
+        std::cout << "C (after shift): " << C.to_hex() << std::endl;*/
+        if (comparsion(R, C)) {
             t = t - 1;
             C = B.shiftBitsToHigh(t - k);
-            std::cout << "C2: " << C.to_hex() << std::endl;
+           /* std::cout << "C2: " << C.to_hex() << std::endl;*/
         }
 
         R = R.longSub(R, C);
-        std::cout << "After subtraction R: " << R.to_hex() << std::endl;
+        /*std::cout << "After subtraction R: " << R.to_hex() << std::endl;*/
         BigInt shiftValue;
         shiftValue = "1";
         shiftValue.resize(count + t - k);
         shiftValue = shiftValue.shiftBitsToHigh(t - k);
         Q = Q.longAdd(Q, shiftValue);
-        std::cout << "Q " << Q.to_hex() << std::endl;
     }
 
-    /*remainder = R; */
     return  Q;
 }
 BigInt BigInt::modulo(const BigInt& A, const BigInt& B) {
-    /*if (B.to_hex() == "0") {
-        throw std::invalid_argument("Division by zero!");
-    }*/
-
     BigInt Q, C;
     BigInt R = A;
 
     size_t k = B.bitLength();
     size_t t;
 
-    while (R >= B) {
+    while (!comparsion(R, B)) {
         t = R.bitLength();
         C = B.shiftBitsToHigh(t - k);
-        if (R < C) {
+        if (comparsion(R, C)) {
             t = t - 1;
             C = B.shiftBitsToHigh(t - k);
         }
@@ -302,8 +293,7 @@ BigInt BigInt::modulo(const BigInt& A, const BigInt& B) {
         Q = Q.longAdd(Q, shiftValue);
     }
 
-    /*remainder = R; */
-    return R;
+    return  R;
 }
 
 BigInt BigInt::LongPowerWindow(const BigInt& left, int right) {
@@ -486,40 +476,10 @@ BigInt BigInt::LongPowerWindow(const BigInt& left, int right) {
 
         return true;
     }
-
-    BigInt BigInt::operator-(const BigInt& other) const {
-        
-
-        BigInt result = *this;
-        uint32_t borrow = 0;
-
-        for (size_t i = 0; i < count; ++i) {
-            uint64_t diff = static_cast<uint64_t>(result.num[i]) - other.num[i] - borrow;
-            if (result.num[i] < other.num[i] + borrow) {
-                borrow = 1;
-            }
-            else {
-                borrow = 0;
-            }
-            result.num[i] = static_cast<uint32_t>(diff);
-        }
-
-        return result;
-    }
-
-    
+  
 
     bool BigInt::operator<(const BigInt& other) const {
-        /*if (this->count != other.count) {
-            return this->count < other.count;
-        }*/
-
-        for (int i = count - 1; i >= 0; --i) {
-            if (this->num[i] != other.num[i]) {
-                return this->num[i] < other.num[i];
-            }
-        }
-
+      
         return false;
     }
 
@@ -564,4 +524,41 @@ BigInt BigInt::LongPowerWindow(const BigInt& left, int right) {
             n /= 2;
         }
         return binary.empty() ? "0" : binary;  
+    }
+    bool BigInt::comparsion(const BigInt& left, const BigInt& right) const {
+        const BigInt* longerPtr = &left;
+        const BigInt* shorterPtr = &right;
+        bool longer = selector(longerPtr, shorterPtr);
+
+        size_t diff = longerPtr->count - shorterPtr->count;
+
+        if(diff > 0){
+            for (size_t i = longerPtr->count; i > diff ; --i) {
+                if (longerPtr->num[i] != 0) {
+                    return longer;
+                }
+            }
+        }
+
+        for (int l = longerPtr->count - diff - 1, s = shorterPtr->count - 1; s >= 0 && l >= 0; --l, --s)
+        {
+            if (longerPtr->num[l] > shorterPtr->num[s]) {
+                return longer;
+            }
+            else if (longerPtr->num[l] < shorterPtr->num[s]) {
+                return !longer;
+            }
+        }
+
+        return false;
+    }
+    bool BigInt::selector(const BigInt*& left, const BigInt*& right) const{
+        const BigInt* temp;
+        if (left->count < right->count){
+            temp = left;
+            left = right;
+            right = temp;
+            return true;
+        }
+        return false;
     }
