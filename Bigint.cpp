@@ -36,9 +36,7 @@ BigInt::BigInt(const BigInt& copy) : count{ copy.count }, size{ copy.size }
 
 //overloaded operators
 BigInt& BigInt::operator=(const std::string& hex_str) {
-    if (hex_str.length() > MaxSize + 2) {
-        throw std::length_error("Error: String exceeds maximum length");
-    }
+
 
     size_t length = hex_str.length();
     size_t newCount = (length / 8) + 1 ;
@@ -139,10 +137,10 @@ BigInt BigInt::longAdd(const BigInt& left, const BigInt& right) {
     helperr = right;
     size_t _count = count_check(left, right);
 
-    result.resize(_count);
+    result.resize(_count + 1);
 
-    helper.resize(_count);
-    helperr.resize(_count);
+    helper.resize(_count + 1);
+    helperr.resize(_count + 1);
 
     uint64_t carry = 0; 
 
@@ -195,51 +193,63 @@ BigInt BigInt::longSub(const BigInt& left, const BigInt& right) {
     return result;
 }
 
-BigInt BigInt::multiplyDigitByBigInt(const BigInt& number, uint32_t digit) {
+BigInt BigInt::LongMulOneDigit(const BigInt& number, uint32_t digit) {
     BigInt result;
     if (digit == 0) {
         return result;
     }
  
-    result.resize(MaxCount);
+    result.resize(number.count + 1);
     BigInt minuend = number;
-    minuend.resize(MaxCount);
+    minuend.resize(number.count + 1);
 
     uint64_t carry = 0;
 
-    for (size_t i = 0; i < MaxCount; ++i) {
-        uint64_t product = static_cast<uint64_t>(minuend.num[i]) * digit + carry;
+    for (size_t i = 0; i < number.count + 1; ++i) {
+        uint64_t temp = static_cast<uint64_t>(minuend.num[i]) * digit + carry;
 
-        result.num[i] = static_cast<uint32_t>(product);
+        result.num[i] = (temp & 0xFFFFFFFF);
 
-        carry = product >> 32;
-    }
-
-    if (carry > 0) {
-        result.resize(result.count + 1); 
-        result.num[result.count - 1] = static_cast<uint32_t>(carry);
+        carry = temp >> 32;
     }
 
     return result;
 }
+
+//BigInt BigInt::multiplyBigInt(const BigInt& left, const BigInt& right) {
+//    BigInt result;
+//    result.resize(left.count + right.count);
+//
+//    uint64_t carry = 0;
+//
+//    for (size_t i = 0; i < left.count; ++i) {
+//        carry = 0; 
+//        for (size_t j = 0; j < right.count; ++j) {
+//            uint64_t product = static_cast<uint64_t>(left.num[i]) * right.num[j] + carry;
+//            result.num[i + j] = static_cast<uint32_t>(product);
+//            carry = product;
+//        }
+//        result.num[i + right.count] = static_cast<uint32_t>(carry);
+//    }
+//    return result;
+//}
 
 BigInt BigInt::multiplyBigInt(const BigInt& left, const BigInt& right) {
     BigInt result;
-    result.resize(left.count + right.count);
+    result.resize(MaxCount);
 
-    uint64_t carry = 0;
-
-    for (size_t i = 0; i < left.count; ++i) {
-        carry = 0; 
-        for (size_t j = 0; j < right.count; ++j) {
-            uint64_t product = static_cast<uint64_t>(left.num[i]) * right.num[j] + result.num[i + j] + carry;
-            result.num[i + j] = static_cast<uint32_t>(product);
-            carry = product >> 32;
-        }
-        result.num[i + right.count] = static_cast<uint32_t>(carry);
+    for (size_t i = 0; i < right.count; i++) {
+        std::cout << "III: " << i << std::endl;
+        BigInt temp;
+        temp = LongMulOneDigit(left, right.num[i]);
+        std::cout << "TEMP1: " << temp.to_hex() << std::endl;
+        temp = temp.shiftBitsToHigh(i * 32);
+        std::cout << "TEMP2: " << temp.to_hex() << std::endl;
+        result = result.longAdd(result, temp);
     }
     return result;
 }
+
 BigInt BigInt::divide(const BigInt& A, const BigInt& B) {
     BigInt Q, C;
     BigInt R = A;
@@ -251,16 +261,16 @@ BigInt BigInt::divide(const BigInt& A, const BigInt& B) {
         t = R.bitLength();
 
         C = B.shiftBitsToHigh(t - k);
-        /*std::cout << "B (before shift): " << B.to_hex() << std::endl;
-        std::cout << "C (after shift): " << C.to_hex() << std::endl;*/
+        std::cout << "B (before shift): " << B.to_hex() << std::endl;
+        std::cout << "C (after shift): " << C.to_hex() << std::endl;
         if (comparsion(R, C)) {
             t = t - 1;
             C = B.shiftBitsToHigh(t - k);
-           /* std::cout << "C2: " << C.to_hex() << std::endl;*/
+            std::cout << "C2: " << C.to_hex() << std::endl;
         }
 
         R = R.longSub(R, C);
-        /*std::cout << "After subtraction R: " << R.to_hex() << std::endl;*/
+        std::cout << "After subtraction R: " << R.to_hex() << std::endl;
         BigInt shiftValue;
         shiftValue = "1";
         shiftValue.resize(count + t - k);
@@ -375,6 +385,7 @@ BigInt BigInt::LongPowerWindow(const BigInt& left, int right) {
     }
 
     void BigInt::resize(size_t newCount) {
+
         if (this->count == newCount) {
             return; 
         }
@@ -438,11 +449,6 @@ BigInt BigInt::LongPowerWindow(const BigInt& left, int right) {
                 result.num[i] = static_cast<uint32_t>(current);
                 carry = current >> 32; 
             
-            }
-
-            if (carry > 0) {
-                result.resize(result.count + 1);
-                result.num[result.count - 1] = carry;
             }
         }
 

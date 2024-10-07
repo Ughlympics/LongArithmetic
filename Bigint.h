@@ -41,7 +41,7 @@ public:
 	//operations
 	BigInt longAdd(const BigInt& left, const BigInt& right);
 	BigInt longSub(const BigInt& left, const BigInt& right);
-	BigInt multiplyDigitByBigInt(const BigInt& number, uint32_t digit);
+	BigInt LongMulOneDigit(const BigInt& number, uint32_t digit);
 	BigInt multiplyBigInt(const BigInt& left, const BigInt& right);
 	BigInt divide(const BigInt& A, const BigInt& B);
 	BigInt modulo(const BigInt& A, const BigInt& B);
