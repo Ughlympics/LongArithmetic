@@ -216,35 +216,14 @@ BigInt BigInt::LongMulOneDigit(const BigInt& number, uint32_t digit) {
     return result;
 }
 
-//BigInt BigInt::multiplyBigInt(const BigInt& left, const BigInt& right) {
-//    BigInt result;
-//    result.resize(left.count + right.count);
-//
-//    uint64_t carry = 0;
-//
-//    for (size_t i = 0; i < left.count; ++i) {
-//        carry = 0; 
-//        for (size_t j = 0; j < right.count; ++j) {
-//            uint64_t product = static_cast<uint64_t>(left.num[i]) * right.num[j] + carry;
-//            result.num[i + j] = static_cast<uint32_t>(product);
-//            carry = product;
-//        }
-//        result.num[i + right.count] = static_cast<uint32_t>(carry);
-//    }
-//    return result;
-//}
-
 BigInt BigInt::multiplyBigInt(const BigInt& left, const BigInt& right) {
     BigInt result;
     result.resize(MaxCount);
 
     for (size_t i = 0; i < right.count; i++) {
-        std::cout << "III: " << i << std::endl;
         BigInt temp;
         temp = LongMulOneDigit(left, right.num[i]);
-        std::cout << "TEMP1: " << temp.to_hex() << std::endl;
         temp = temp.shiftBitsToHigh(i * 32);
-        std::cout << "TEMP2: " << temp.to_hex() << std::endl;
         result = result.longAdd(result, temp);
     }
     return result;
@@ -259,18 +238,18 @@ BigInt BigInt::divide(const BigInt& A, const BigInt& B) {
     
     while (!comparsion(R, B)) {
         t = R.bitLength();
-
+        //std::cout << "TTTT: " << t << std::endl;
         C = B.shiftBitsToHigh(t - k);
-        std::cout << "B (before shift): " << B.to_hex() << std::endl;
-        std::cout << "C (after shift): " << C.to_hex() << std::endl;
+        //std::cout << "B (before shift): " << B.to_hex() << std::endl;
+        //std::cout << "C (after shift): " << C.to_hex() << std::endl;
         if (comparsion(R, C)) {
             t = t - 1;
             C = B.shiftBitsToHigh(t - k);
-            std::cout << "C2: " << C.to_hex() << std::endl;
+            //std::cout << "C2: " << C.to_hex() << std::endl;
         }
 
         R = R.longSub(R, C);
-        std::cout << "After subtraction R: " << R.to_hex() << std::endl;
+        //std::cout << "After subtraction R: " << R.to_hex() << std::endl;
         BigInt shiftValue;
         shiftValue = "1";
         shiftValue.resize(count + t - k);
@@ -538,13 +517,13 @@ BigInt BigInt::LongPowerWindow(const BigInt& left, int right) {
 
         size_t diff = longerPtr->count - shorterPtr->count;
 
-        if(diff > 0){
+        /*if(diff > 0){
             for (size_t i = longerPtr->count; i > diff ; --i) {
                 if (longerPtr->num[i] != 0) {
                     return longer;
                 }
             }
-        }
+        }*/
 
         for (int l = longerPtr->count - diff - 1, s = shorterPtr->count - 1; s >= 0 && l >= 0; --l, --s)
         {
