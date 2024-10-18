@@ -77,6 +77,44 @@ BigInt& BigInt::operator=(const BigInt& copy)
     return *this;
 }
 
+BigInt BigInt::operator+(const BigInt& other) const {
+    BigInt r;
+    r = r.longAdd(*this, other);
+    return r;
+}
+
+BigInt BigInt::operator-(const BigInt& other) const {
+    BigInt r;
+    r = r.longSub(*this, other);
+    return r;
+}
+
+BigInt BigInt::operator*(const BigInt& other) const {
+    BigInt r;
+    r = r.multiplyBigInt(*this, other);
+    return r;
+}
+
+BigInt BigInt::operator/(const BigInt& other) const {
+    BigInt r;
+    r = r.divide(*this, other);
+    return r;
+}
+
+BigInt BigInt::operator%(const BigInt& other) const {
+    BigInt r;
+    r = r.modulo(*this, other);
+    return r;
+}
+
+BigInt BigInt::operator<<(size_t shift) const {
+    return shiftBitsToHigh(shift);
+}
+
+BigInt BigInt::operator>>(size_t shift) const {
+    return shiftBitsToLow(shift);
+}
+
 //print function
 std::string BigInt::to_hex() const {
     if (count == 0 || num == nullptr) {
@@ -164,9 +202,9 @@ BigInt BigInt::longSub(const BigInt& left, const BigInt& right) {
     BigInt minuend; 
     BigInt subtrahend;
     size_t _count = count_check(left, right);
-    if (left < right) {
+    /*if (left < right) {
         throw std::invalid_argument("Subtraction error: right operand is greater than left operand.");
-    }
+    }*/
     minuend = left;
     subtrahend = right;
       
@@ -238,18 +276,13 @@ BigInt BigInt::divide(const BigInt& A, const BigInt& B) {
     
     while (!comparsion(R, B)) {
         t = R.bitLength();
-        //std::cout << "TTTT: " << t << std::endl;
         C = B.shiftBitsToHigh(t - k);
-        //std::cout << "B (before shift): " << B.to_hex() << std::endl;
-        //std::cout << "C (after shift): " << C.to_hex() << std::endl;
         if (comparsion(R, C)) {
             t = t - 1;
             C = B.shiftBitsToHigh(t - k);
-            //std::cout << "C2: " << C.to_hex() << std::endl;
         }
 
         R = R.longSub(R, C);
-        //std::cout << "After subtraction R: " << R.to_hex() << std::endl;
         BigInt shiftValue;
         shiftValue = "1";
         shiftValue.resize(count + t - k);
@@ -434,6 +467,36 @@ BigInt BigInt::LongPowerWindow(const BigInt& left, int right) {
         return result;
     }
 
+    BigInt BigInt::shiftBitsToLow(size_t n) const {
+        BigInt result(*this);
+
+        size_t chunkShift = n / 32;  
+        size_t bitShift = n % 32;     
+
+        if (chunkShift > 0) {
+            for (size_t i = 0; i < count - chunkShift; ++i) {
+                result.num[i] = result.num[i + chunkShift];
+            }
+
+            for (size_t i = count - chunkShift; i < count; ++i) {
+                result.num[i] = 0;
+            }
+
+            result.resize(count - chunkShift);
+        }
+
+        if (bitShift > 0) {
+            uint32_t carry = 0;
+            for (size_t i = count; i-- > 0;) {
+                uint64_t current = (static_cast<uint64_t>(result.num[i]) >> bitShift) | (static_cast<uint64_t>(carry) << (32 - bitShift));
+                carry = result.num[i] & ((1 << bitShift) - 1);
+                result.num[i] = static_cast<uint32_t>(current);
+            }
+        }
+
+        return result;
+    }
+
     bool BigInt::operator>=(const BigInt& other) const {
         if (count != other.count) {
             return count > other.count;
@@ -460,46 +523,6 @@ BigInt BigInt::LongPowerWindow(const BigInt& left, int right) {
         }
 
         return true;
-    }
-  
-
-    bool BigInt::operator<(const BigInt& other) const {
-      
-        return false;
-    }
-
-    BigInt BigInt::operator<<(unsigned long long shift) const {
-        BigInt result = *this;
-
-        size_t blockShift = shift / 32;
-        size_t bitShift = shift % 32;    
-
-        result.resize(count + blockShift);
-
-        for (size_t i = count; i-- > 0;) { 
-            if (i >= blockShift) {
-                result.num[i] = result.num[i - blockShift];
-            }
-            else {
-                result.num[i] = 0;
-            }
-        }
-
-        if (bitShift > 0) {
-            uint32_t carry = 0;
-            for (size_t i = 0; i < result.count; ++i) {
-                uint64_t temp = (static_cast<uint64_t>(result.num[i]) << bitShift) | carry;
-                carry = static_cast<uint32_t>(temp >> 32);
-                result.num[i] = static_cast<uint32_t>(temp); 
-            }
-
-            if (carry > 0) {
-                result.resize(result.count + 1);
-                result.num[result.count - 1] = carry;
-            }
-        }
-
-        return result;
     }
 
     std::string intToBinary(int n) {

@@ -27,11 +27,16 @@ public:
 	//overloaded operators
 	BigInt& operator=(const std::string& hex_str);
 	BigInt& operator=(const BigInt& copy);
+	BigInt operator+(const BigInt& other) const;
+	BigInt operator-(const BigInt& other) const;
+	BigInt operator*(const BigInt& other) const;
+	BigInt operator/(const BigInt& other) const;
+	BigInt operator%(const BigInt& other) const;
 	BigInt operator<<(unsigned long long shift) const;
+	BigInt operator>>(unsigned long long shift) const;
 	bool operator>=(const BigInt& other) const;
 	bool operator==(const BigInt& other) const;
-	BigInt operator-(const BigInt& other) const;
-	bool operator<(const BigInt& other) const;
+
 
 //print realize
 	std::string to_hex() const;
@@ -54,6 +59,7 @@ public:
 	//divide logic
 	size_t bitLength() const;
 	BigInt shiftBitsToHigh(size_t n) const;
+	BigInt shiftBitsToLow(size_t n) const;
 	bool comparsion(const BigInt& left, const BigInt& right) const;
 	bool selector(const BigInt*& longer, const BigInt*& shorter) const;
 
