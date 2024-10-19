@@ -342,6 +342,62 @@ BigInt BigInt::LongPowerWindow(const BigInt& left, int right) {
     return result;
 }
 
+BigInt BigInt::BigIntGSD(const BigInt& A, const BigInt& B) {
+    BigInt d, a, b, temp;
+    d = "1";
+    a = A;
+    b = B;
+    while (parity_check(a) && parity_check(b)) {
+        a = a >> 1;
+        b = b >> 1;
+        d = d << 1;
+    }
+    while (parity_check(a)) {
+        a = a >> 1;
+    }
+
+    while (not_zero(b)) {
+        while (parity_check(b)) {
+            b = b << 1;
+        }
+        if (!comparsion(a, b)) {
+            temp = a;
+            a = b;
+            b = a;
+        }
+        b = b - a;
+    }
+    d = d * a;
+    return d;
+}
+
+//gcd support
+bool BigInt::not_zero(const BigInt& number) const {
+    for (size_t i = 0; i < number.count; i++) {
+        if (number.num[i] != 0) {
+            return true; 
+        }
+    }
+    return false;
+}
+
+
+bool BigInt::parity_check(const BigInt& left) const {
+    bool hasNonZero = false;
+    for (size_t i = 0; i < count; i++) {
+        if (left.num[i] & 1) {
+            return false;
+        }
+        if (left.num[i] != 0); {
+            hasNonZero = true;
+        }
+    }
+    if (!hasNonZero) {
+        return false;
+    }
+    return true;
+}
+
 //all reverse realization))
     std::string reverseBlocks(const std::string& input) {
         std::string result = input;

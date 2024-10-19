@@ -51,6 +51,7 @@ public:
 	BigInt divide(const BigInt& A, const BigInt& B);
 	BigInt modulo(const BigInt& A, const BigInt& B);
 	BigInt LongPowerWindow(const BigInt& left, int right);
+	BigInt BigIntGSD(const BigInt& A, const BigInt& B);
 
 	//check
 	friend size_t count_check(const BigInt& left, const BigInt& right);
@@ -63,7 +64,9 @@ public:
 	bool comparsion(const BigInt& left, const BigInt& right) const;
 	bool selector(const BigInt*& longer, const BigInt*& shorter) const;
 
-
+	//gcd check
+	bool parity_check(const BigInt& left) const;
+	bool not_zero(const BigInt& number) const;
 	
 };
 
