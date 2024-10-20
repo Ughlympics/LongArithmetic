@@ -348,30 +348,37 @@ BigInt BigInt::BigIntGSD(const BigInt& A, const BigInt& B) {
     a = A;
     b = B;
     while (parity_check(a) && parity_check(b)) {
-        a = a >> 1;
-        b = b >> 1;
-        d = d << 1;
+        a = a.shiftBitsToLow(1);
+        b = b.shiftBitsToLow(1);
+        d = d.shiftBitsToHigh(1);
     }
+    std::cout << "DDD: " << d.to_hex() << std::endl;
     while (parity_check(a)) {
-        a = a >> 1;
+        a = a.shiftBitsToLow(1);
     }
 
     while (not_zero(b)) {
-        while (parity_check(b)) {
-            b = b << 1;
+        while (!(b.num[0] & 1)) {
+            b = b.shiftBitsToLow(1);
+            std::cout << "B: " << b.to_hex() << std::endl;
         }
         if (!comparsion(a, b)) {
             temp = a;
             a = b;
-            b = a;
+            b = temp;
+            std::cout << "a: " << a.to_hex() << std::endl;
+            std::cout << "b: " << b.to_hex() << std::endl;
         }
-        b = b - a;
+        b = b.longSub(b, a);
+        std::cout << "bbbb: " << b.to_hex() << std::endl;
     }
-    d = d * a;
+    std::cout << "beforeD: " << d.to_hex() << std::endl;
+    d = d.multiplyBigInt(d, a);
+    std::cout << "afterD: " << d.to_hex() << std::endl;
     return d;
 }
 
-//gcd support
+
 bool BigInt::not_zero(const BigInt& number) const {
     for (size_t i = 0; i < number.count; i++) {
         if (number.num[i] != 0) {

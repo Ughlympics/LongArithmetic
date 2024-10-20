@@ -52,6 +52,7 @@ public:
 	BigInt modulo(const BigInt& A, const BigInt& B);
 	BigInt LongPowerWindow(const BigInt& left, int right);
 	BigInt BigIntGSD(const BigInt& A, const BigInt& B);
+	BigInt lcm(const BigInt& A, const BigInt& B);
 
 	//check
 	friend size_t count_check(const BigInt& left, const BigInt& right);
