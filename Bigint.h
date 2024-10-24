@@ -32,8 +32,8 @@ public:
 	BigInt operator*(const BigInt& other) const;
 	BigInt operator/(const BigInt& other) const;
 	BigInt operator%(const BigInt& other) const;
-	BigInt operator<<(unsigned long long shift) const;
-	BigInt operator>>(unsigned long long shift) const;
+	BigInt operator<<(size_t shift) const;
+	BigInt operator>>(size_t shift) const;
 	bool operator>=(const BigInt& other) const;
 	bool operator==(const BigInt& other) const;
 
@@ -53,6 +53,8 @@ public:
 	BigInt LongPowerWindow(const BigInt& left, int right);
 	BigInt BigIntGSD(const BigInt& A, const BigInt& B);
 	BigInt lcm(const BigInt& A, const BigInt& B);
+	BigInt BarrettReduction(const BigInt& x, const BigInt& n, const BigInt& mu) const;
+	BigInt LongModPowerBarrett(const BigInt& A, const BigInt& B, const BigInt& N) const;
 
 	//check
 	friend size_t count_check(const BigInt& left, const BigInt& right);

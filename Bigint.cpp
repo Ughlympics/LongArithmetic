@@ -352,7 +352,6 @@ BigInt BigInt::BigIntGSD(const BigInt& A, const BigInt& B) {
         b = b.shiftBitsToLow(1);
         d = d.shiftBitsToHigh(1);
     }
-    std::cout << "DDD: " << d.to_hex() << std::endl;
     while (parity_check(a)) {
         a = a.shiftBitsToLow(1);
     }
@@ -360,25 +359,84 @@ BigInt BigInt::BigIntGSD(const BigInt& A, const BigInt& B) {
     while (not_zero(b)) {
         while (!(b.num[0] & 1)) {
             b = b.shiftBitsToLow(1);
-            std::cout << "B: " << b.to_hex() << std::endl;
         }
         if (!comparsion(a, b)) {
             temp = a;
             a = b;
             b = temp;
-            std::cout << "a: " << a.to_hex() << std::endl;
-            std::cout << "b: " << b.to_hex() << std::endl;
         }
         b = b.longSub(b, a);
-        std::cout << "bbbb: " << b.to_hex() << std::endl;
     }
-    std::cout << "beforeD: " << d.to_hex() << std::endl;
     d = d.multiplyBigInt(d, a);
-    std::cout << "afterD: " << d.to_hex() << std::endl;
     return d;
 }
 
+BigInt BigInt::lcm(const BigInt& A, const BigInt& B) {
+    BigInt res, mul;
+    mul = mul.multiplyBigInt(A, B);
+    res = res.BigIntGSD(A, B);
+    res = res.divide(mul, res);
+    return res;
+}
 
+BigInt BigInt::BarrettReduction(const BigInt& x, const BigInt& n, const BigInt& mu) const {
+    size_t k = n.bitLength();
+    std::cout << "k: " << k << std::endl;
+
+    BigInt q, u, r;
+    q = x;
+    std::cout << "Q1: " << q.to_hex() << std::endl;
+
+    // 1. q := KillLastDigits(x, k - 1)
+    q = q.shiftBitsToLow(k - 1);
+    std::cout << "Q1: " << q.to_hex() << std::endl;
+
+    // 2. q := q * mu
+    q = q.multiplyBigInt(q, mu);
+
+    // 3. q := KillLastDigits(q, k + 1)
+    q = q.shiftBitsToLow(k + 1);
+
+    // 4. r := x - q * n
+    u = u.multiplyBigInt(q, n);
+    r = r.longSub(x, u);
+
+    // 5. r >= n
+    while (!comparsion(r, n)) {
+        r = r.longSub(r, n);
+    }
+    return r;
+}
+
+BigInt BigInt::LongModPowerBarrett(const BigInt& A, const BigInt& B, const BigInt& N) const {
+    BigInt C, mu;
+    C = "1";
+    mu = "1";
+    size_t k = N.bitLength();
+    
+     mu = mu.shiftBitsToHigh(2 * k);
+     std::cout << "mu1: " << mu.to_hex() << std::endl;
+     std::cout << "N: " << N.to_hex() << std::endl;
+     mu = mu.divide(mu, N);
+     std::cout << "mu2: " << mu.to_hex() << std::endl;
+
+    BigInt base;
+    base = A;
+    std::cout << "Base: " << base.to_hex() << std::endl;
+
+    for (size_t i = 0; i < B.bitLength(); ++i) {
+            for (int j = 0; j < 32; ++j) {
+                if ((B.num[i] >> j) & 1) {
+                    C = BarrettReduction(C.multiplyBigInt(C, base), N, mu);
+                }
+            base = BarrettReduction(base.multiplyBigInt(base, base), N, mu);
+        }
+    }
+
+    return C;
+}
+
+// gcd helpers
 bool BigInt::not_zero(const BigInt& number) const {
     for (size_t i = 0; i < number.count; i++) {
         if (number.num[i] != 0) {
@@ -610,6 +668,13 @@ bool BigInt::parity_check(const BigInt& left) const {
                 }
             }
         }*/
+        if (diff > 0) {
+            for (size_t i = longerPtr->count - 1; i > shorterPtr->count; --i) {
+                if (longerPtr->num[i] != 0) {
+                    return longer;
+                }
+            }
+        }
 
         for (int l = longerPtr->count - diff - 1, s = shorterPtr->count - 1; s >= 0 && l >= 0; --l, --s)
         {
