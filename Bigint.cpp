@@ -79,32 +79,27 @@ BigInt& BigInt::operator=(const BigInt& copy)
 
 BigInt BigInt::operator+(const BigInt& other) const {
     BigInt r;
-    r = r.longAdd(*this, other);
-    return r;
+    return r.longAdd(*this, other);
 }
 
 BigInt BigInt::operator-(const BigInt& other) const {
     BigInt r;
-    r = r.longSub(*this, other);
-    return r;
+    return r.longSub(*this, other);
 }
 
 BigInt BigInt::operator*(const BigInt& other) const {
     BigInt r;
-    r = r.multiplyBigInt(*this, other);
-    return r;
+    return r.multiplyBigInt(*this, other);
 }
 
 BigInt BigInt::operator/(const BigInt& other) const {
     BigInt r;
-    r = r.divide(*this, other);
-    return r;
+    return r.divide(*this, other);
 }
 
 BigInt BigInt::operator%(const BigInt& other) const {
     BigInt r;
-    r = r.modulo(*this, other);
-    return r;
+    return r.modulo(*this, other);
 }
 
 BigInt BigInt::operator<<(size_t shift) const {
@@ -281,7 +276,6 @@ BigInt BigInt::divide(const BigInt& A, const BigInt& B) {
             t = t - 1;
             C = B.shiftBitsToHigh(t - k);
         }
-
         R = R.longSub(R, C);
         BigInt shiftValue;
         shiftValue = "1";
@@ -289,7 +283,7 @@ BigInt BigInt::divide(const BigInt& A, const BigInt& B) {
         shiftValue = shiftValue.shiftBitsToHigh(t - k);
         Q = Q.longAdd(Q, shiftValue);
     }
-
+    Q.deleteLeadingZeros();
     return  Q;
 }
 BigInt BigInt::modulo(const BigInt& A, const BigInt& B) {
@@ -321,22 +315,18 @@ BigInt BigInt::modulo(const BigInt& A, const BigInt& B) {
 BigInt BigInt::LongPowerWindow(const BigInt& left, int right) {
     std::string bit = intToBinary(right);
     std::reverse(bit.begin(), bit.end());
-    std::cout << "Bit: " << bit << std::endl;
 
     BigInt A = left;
     BigInt result;
     result = "1";
 
     size_t m = bit.length();
-    std::cout << "M: " << m << std::endl;
 
     for (size_t i = 0; i < m; i++) {
         if (bit[i] == '1') {
             result = multiplyBigInt(result, A);
-            std::cout << "result: " << result.to_hex() << std::endl;
         }
         A = multiplyBigInt(A, A);
-        std::cout << A.to_hex() << std::endl;
     }
 
     return result;
@@ -379,32 +369,46 @@ BigInt BigInt::lcm(const BigInt& A, const BigInt& B) {
     return res;
 }
 
-BigInt BigInt::BarrettReduction(const BigInt& x, const BigInt& n, const BigInt& mu) const {
-    size_t k = n.bitLength();
-    std::cout << "k: " << k << std::endl;
 
+BigInt BigInt::mod_longAdd(const BigInt& a, const BigInt& b, const BigInt& n){
+    return (a + b) % n;
+}
+
+BigInt BigInt::mod_longSub(const BigInt& a, const BigInt& b, const BigInt& n) {
+    return (a - b) % n;
+}
+
+BigInt BigInt::mod_multiplyBigInt(const BigInt& a, const BigInt& b, const BigInt& n){
+    return (a * b) % n;
+}
+
+BigInt BigInt::mod_squareBigInt(const BigInt& n){
+    return mod_multiplyBigInt(*this, *this, n);
+}
+
+
+BigInt BigInt::BarrettReduction(const BigInt& x, const BigInt& n, const BigInt& mu) const {
+    size_t k = ((n.to_hex()).length() + 7) / 8;
+    //size_t k = n.bitLength();
     BigInt q, u, r;
     q = x;
-    std::cout << "Q1: " << q.to_hex() << std::endl;
+    q = q.KillLastDidits(k - 1);
 
-    // 1. q := KillLastDigits(x, k - 1)
-    q = q.shiftBitsToLow(k - 1);
-    std::cout << "Q1: " << q.to_hex() << std::endl;
+    q = q * mu;
 
-    // 2. q := q * mu
-    q = q.multiplyBigInt(q, mu);
+    q = q.KillLastDidits(k + 1);
 
-    // 3. q := KillLastDigits(q, k + 1)
-    q = q.shiftBitsToLow(k + 1);
+    /*u = u.multiplyBigInt(q, n);
+    std::cout << "Q * mu: " << u.to_hex() << std::endl;
+    r = x;
+    std::cout << "R aka X : " << r.to_hex() << std::endl;
+    r = r.longSub(r, u);*/
+    r = x - (q * n);
 
-    // 4. r := x - q * n
-    u = u.multiplyBigInt(q, n);
-    r = r.longSub(x, u);
-
-    // 5. r >= n
     while (!comparsion(r, n)) {
         r = r.longSub(r, n);
     }
+    r.deleteLeadingZeros();
     return r;
 }
 
@@ -412,28 +416,72 @@ BigInt BigInt::LongModPowerBarrett(const BigInt& A, const BigInt& B, const BigIn
     BigInt C, mu;
     C = "1";
     mu = "1";
-    size_t k = N.bitLength();
+    size_t k = ((N.to_hex()).length() + 7) / 8;
     
-     mu = mu.shiftBitsToHigh(2 * k);
-     std::cout << "mu1: " << mu.to_hex() << std::endl;
-     std::cout << "N: " << N.to_hex() << std::endl;
+     mu = mu.LongShiftDigitsToHigh(mu, k << 1);
      mu = mu.divide(mu, N);
-     std::cout << "mu2: " << mu.to_hex() << std::endl;
 
-    BigInt base;
+
+    BigInt base, extra;
     base = A;
-    std::cout << "Base: " << base.to_hex() << std::endl;
+    extra = N;
 
-    for (size_t i = 0; i < B.bitLength(); ++i) {
+    for (size_t i = 0; i < B.count; ++i) {
             for (int j = 0; j < 32; ++j) {
                 if ((B.num[i] >> j) & 1) {
-                    C = BarrettReduction(C.multiplyBigInt(C, base), N, mu);
+                    C = BarrettReduction(C * base, extra, mu);
                 }
-            base = BarrettReduction(base.multiplyBigInt(base, base), N, mu);
+                //base = base.LongPowerWindow(base, 2);
+                base = BarrettReduction(base * base, extra, mu);
         }
     }
 
     return C;
+}
+
+void BigInt::deleteLeadingZeros() {
+    size_t i = count;
+    while (i > 1 && num[i - 1] == 0) {
+        --i;
+    }
+
+    if (i < count) {
+        resize(i);
+    }
+}
+
+//barret helpers
+BigInt BigInt::KillLastDidits(size_t k) const {
+
+    BigInt res;
+    res = *this;
+    if (k > count) return BigInt();
+    if (k > 0) {
+        for (size_t i = 0; i < count - k; ++i) {
+            res.num[i] = res.num[i + k];
+        }
+
+        for (size_t i = count - k; i < count; ++i) {
+            res.num[i] = 0;
+        }
+
+        res.resize(count - k);
+    }
+
+    return res;
+}
+
+BigInt BigInt::LongShiftDigitsToHigh(const BigInt& x, size_t numBlocks) const {
+    BigInt result;
+    result.resize(x.count + numBlocks);  // Увеличиваем количество блоков на numBlocks
+
+    // Копируем исходные блоки числа `x` в старшие разряды результата.
+    for (size_t i = 0; i < x.count; ++i) {
+        result.num[i + numBlocks] = x.num[i];
+    }
+
+    // Младшие блоки (numBlocks) остаются нулями, что соответствует сдвигу.
+    return result;
 }
 
 // gcd helpers
@@ -603,7 +651,7 @@ bool BigInt::parity_check(const BigInt& left) const {
                 result.num[i] = 0;
             }
 
-            result.resize(count - chunkShift);
+            /*result.resize(count - chunkShift);*/
         }
 
         if (bitShift > 0) {

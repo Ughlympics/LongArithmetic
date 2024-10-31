@@ -51,14 +51,22 @@ public:
 	BigInt divide(const BigInt& A, const BigInt& B);
 	BigInt modulo(const BigInt& A, const BigInt& B);
 	BigInt LongPowerWindow(const BigInt& left, int right);
+	//mod op
 	BigInt BigIntGSD(const BigInt& A, const BigInt& B);
 	BigInt lcm(const BigInt& A, const BigInt& B);
+	BigInt mod_longAdd(const BigInt& a, const BigInt& b, const BigInt& n);
+	BigInt mod_longSub(const BigInt& a, const BigInt& b, const BigInt& n);
+	BigInt mod_multiplyBigInt(const BigInt& a, const BigInt& b, const BigInt& n);
+	BigInt mod_squareBigInt(const BigInt& n);
 	BigInt BarrettReduction(const BigInt& x, const BigInt& n, const BigInt& mu) const;
 	BigInt LongModPowerBarrett(const BigInt& A, const BigInt& B, const BigInt& N) const;
+	BigInt KillLastDidits(size_t n) const;
+	BigInt LongShiftDigitsToHigh(const BigInt& x, size_t numBlocks) const;
 
 	//check
 	friend size_t count_check(const BigInt& left, const BigInt& right);
 	void resize(size_t newCount);
+	void deleteLeadingZeros();
 
 	//divide logic
 	size_t bitLength() const;
