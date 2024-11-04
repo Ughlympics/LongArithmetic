@@ -19,9 +19,14 @@ public:
         std::chrono::duration<double> elapsed = end - start;
         std::cout << name << " took " << elapsed.count() << " seconds.\n";
     }
+    double getElapsedTime() const {
+        return elapsedTime;
+    }
 
 private:
     std::chrono::time_point<std::chrono::high_resolution_clock> start;
     std::string name;
+    double elapsedTime;  
+    bool stopped = false;
 };
 
