@@ -374,7 +374,13 @@ BigInt BigInt::mod_longAdd(const BigInt& a, const BigInt& b, const BigInt& n){
     return (a + b) % n;
 }
 
-BigInt BigInt::mod_longSub(const BigInt& a, const BigInt& b, const BigInt& n) {
+BigInt BigInt::mod_longSub(const BigInt& a, const BigInt& b, const BigInt& n) { 
+    if (comparsion(a, b))
+    {
+        BigInt c;
+        c = a + n;
+        return (c - b) % n;
+    }
     return (a - b) % n;
 }
 
@@ -417,6 +423,7 @@ BigInt BigInt::LongModPowerBarrett(const BigInt& A, const BigInt& B, const BigIn
     C = "1";
     mu = "1";
     size_t k = ((N.to_hex()).length() + 7) / 8;
+    //size_t k = N.count;
     
      mu = mu.LongShiftDigitsToHigh(mu, k << 1);
      mu = mu.divide(mu, N);
